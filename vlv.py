@@ -28,18 +28,18 @@ substrate_length = 10
 substrate_width = 6
 substrate_thickness = 1
 
-fig = plt.figure()
-ax = fig.add_subplot(111,projection= '3d')
+fig = plt.figure() #tells the interpreter to create a blank canvas for drawing
+ax = fig.add_subplot(111,projection= '3d') #now on canvas fig create a 3d plot where 111 refers to 1 x-axis,1 y-axis,1 z- axis and 3d means to create 3d plot
 
 substrate = create_block(
     0,0,0,substrate_length,substrate_width,substrate_thickness,
     color=(0.45,0.45,0.5),  # P-type color
     alpha=1
-)
+) #creating of substrate block
 
-ax.add_collection3d(substrate)
+ax.add_collection3d(substrate)#finally by this command we bring substrate on canvas
 
-ax.set_xlim(0, substrate_length)
+ax.set_xlim(0, substrate_length)#define x y z boundaries to show
 ax.set_ylim(0, substrate_width)
 ax.set_zlim(0, 8)
 
@@ -47,4 +47,4 @@ ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
 
-plt.show()
+plt.show() 
