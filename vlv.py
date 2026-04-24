@@ -39,12 +39,12 @@ with tab_aim:
 with tab_theory:
     st.header("Theoretical Background")
     st.subheader("1. Spin Coating")
-    st.markdown("""
+    st.markdown(r"""
     Spin coating is used to deposit uniform thin films onto flat substrates. 
     The final film thickness ($t$) depends heavily on the spin speed ($\omega$ in RPM) and the viscosity of the photoresist. 
     For AZ 1505, this can be approximated using the inverse square root law:
     
-    $t = \\frac{k}{\\sqrt{\\omega}}$
+    $t = \frac{k}{\sqrt{\omega}}$
     
     Where $k$ is a resist-specific constant calibrated to yield ~0.5 µm at 4000 RPM.
     """)
@@ -59,7 +59,7 @@ with tab_theory:
 # --- TAB 3: PROCEDURE ---
 with tab_procedure:
     st.header("Experiment Instructions")
-    st.markdown("""
+    st.markdown(r"""
     1. Navigate to the **Simulation** tab.
     2. In the left sidebar, ensure **AZ 1505** is selected.
     3. Select **Step 1: Spin Coating**. Adjust the RPM slider and observe the inverse relationship with film thickness on the cross-section graph.
