@@ -39,15 +39,15 @@ with tab_aim:
 with tab_theory:
     st.header("Theoretical Background")
     st.subheader("1. Spin Coating")
-    st.markdown(r"""
-    Spin coating is used to deposit uniform thin films onto flat substrates. 
-    The final film thickness ($t$) depends heavily on the spin speed ($\omega$ in RPM) and the viscosity of the photoresist. 
-    For AZ 1505, this can be approximated using the inverse square root law:
-    
-    $t = \frac{k}{\sqrt{\omega}}$
-    
-    Where $k$ is a resist-specific constant calibrated to yield ~0.5 µm at 4000 RPM.
-    """)
+    st.markdown("""
+Spin coating is used to deposit uniform thin films onto flat substrates. 
+The final film thickness ($t$) depends heavily on the spin speed ($\\omega$ in RPM) and the viscosity of the photoresist. 
+For AZ 1505, this can be approximated using the inverse square root law:
+
+$t = \\frac{k}{\\sqrt{\\omega}}$
+
+Where $k$ is a resist-specific constant calibrated to yield ~0.5 µm at 4000 RPM.
+""")
     st.subheader("2. Soft Bake (Pre-Bake)")
     st.markdown("""
     The soft bake step evaporates the remaining casting solvent, densifying the film. 
