@@ -164,9 +164,92 @@ with tab_simulation:
             ax.grid(True, axis='y', linestyle='--', alpha=0.5)
             st.pyplot(fig)
 
-    elif step == "3. Exposure (Coming Soon)":
-        st.header("Step 3: UV Exposure")
-        st.info("Simulation for optical constants and exposure dose will be implemented here.")
+    # --- Step 3 Logic: Maskless Exposure ---
+    elif step == "3. Maskless Exposure":
+        st.header("Step 3: Direct Write Exposure (uMLA)")
+        st.markdown("Simulating the **uMLA maskless aligner** using a 365 nm UV light source.")
+        
+        if st.session_state.resist_status in ["Degraded", "Charred", "Unbaked"]:
+            st.error(f"Cannot expose wafer. The photoresist is currently {st.session_state.resist_status.lower()}.")
+        else:
+            st.sidebar.markdown("---")
+            st.sidebar.subheader("uMLA Parameters")
+            
+            # Scan Mode Options 
+            scan_mode = st.sidebar.radio("Scan Mode", ["Vector Scan", "Raster Scan"])
+            pattern_type = st.sidebar.selectbox("Digital Write Pattern", ["Single Trench", "Double Trench", "Dense Grating"])
+            
+            # Dose and Defocus based on lab manual specs
+            dose = st.sidebar.slider("Exposure Dose (mJ/cm²)", min_value=20, max_value=200, value=90, step=10)
+            defocus = st.sidebar.slider("Defocus (µm)", min_value=-20, max_value=20, value=0, step=5)
+            
+            # Display Theoretical Impact of Defocus
+            if defocus == 0:
+                st.success("✅ **Optimal focus:** Produces sharp, high-resolution features.")
+            elif defocus > 0:
+                st.info("ℹ️ **Positive defocus:** Beam focused above resist. Increases spot size, useful for larger features.")
+            else:
+                st.info("ℹ️ **Negative defocus:** Beam focused below resist. Can improve sidewall angles.")
+
+            # 1. Create the sharp 1D digital mask array (Perfect Focus)
+            x = np.linspace(0, 10, 500) # High resolution for smooth plotting
+            base_profile = np.zeros_like(x)
+            
+            if pattern_type == "Single Trench":
+                base_profile[(x > 4) & (x < 6)] = 1.0
+            elif pattern_type == "Double Trench":
+                base_profile[(x > 2) & (x < 4)] = 1.0
+                base_profile[(x > 6) & (x < 8)] = 1.0
+            elif pattern_type == "Dense Grating":
+                for i in np.arange(1, 10, 1.5):
+                    base_profile[(x > i) & (x < i + 0.6)] = 1.0
+
+            # 2. Simulate Defocus (Beam Spread)
+            # Scaling the blur effect down slightly so it remains visible on a 10um plot
+            blur_amount = abs(defocus) 
+            if blur_amount > 0:
+                window_size = int(blur_amount * 2.5) 
+                if window_size > 0:
+                    window = np.ones(window_size) / window_size
+                    exposure_profile = np.convolve(base_profile, window, mode='same')
+                    # Defocus lowers peak intensity
+                    peak_reduction = max(0.2, 1.0 - (blur_amount * 0.03))
+                    exposure_profile = exposure_profile * peak_reduction
+            else:
+                exposure_profile = base_profile
+
+            st.session_state.received_dose = exposure_profile * dose
+            
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Operating Mode", scan_mode)
+            col2.metric("Laser Dose", f"{dose} mJ/cm²")
+            col3.metric("Defocus Offset", f"{defocus} µm")
+
+            st.markdown("---")
+            fig, ax = plt.subplots(figsize=(10, 4))
+            
+            baked_thickness = st.session_state.current_thickness * 0.90 
+            
+            # Substrate and Unexposed Resist
+            ax.fill_between(x, 0, -2, color='#A9A9A9', label='Silicon Substrate')
+            ax.fill_between(x, 0, baked_thickness, color='#FF0000', alpha=0.8, label='Unexposed AZ 1505')
+            
+            # Exposed Resist (Chemical Reaction)
+            # A chemical reaction occurs between the resist and the light[cite: 292].
+            # Only the exposed areas undergo a chemical reaction[cite: 293].
+            exposed_thickness = np.where(exposure_profile > 0.05, baked_thickness, 0)
+            ax.fill_between(x, 0, exposed_thickness, color='#FFFF00', alpha=np.clip(exposure_profile, 0, 1), label='Reacted AZ 1505')
+            
+            # Laser Intensity Curve
+            ax.plot(x, exposure_profile * (baked_thickness + 1.0), color='blue', linestyle='-', linewidth=2, label='365nm Laser Profile')
+            
+            ax.set_ylim(-2.5, 4.5) 
+            ax.set_xlim(0, 10)
+            ax.set_ylabel("Thickness / Intensity")
+            ax.set_xticks([])
+            ax.legend(loc="upper right", fontsize='small')
+            ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+            st.pyplot(fig)
 
 # --- TAB 5: QUIZ ---
 with tab_quiz:
