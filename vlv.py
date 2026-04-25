@@ -76,7 +76,13 @@ with tab_simulation:
     st.sidebar.markdown("---")
     step = st.sidebar.radio(
         "Select Process Step:",
-        ["1. Spin Coating", "2. Soft Bake", "3. Exposure (Coming Soon)"]
+        [
+            "1. Spin Coating", 
+            "2. Soft Bake", 
+            "3. Maskless Exposure", 
+            "4. Post-Exposure Bake (PEB)",
+            "5. Development"
+        ]
     )
 
     # --- Step 1 Logic ---
