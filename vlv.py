@@ -80,8 +80,8 @@ with tab_simulation:
             "1. Spin Coating", 
             "2. Soft Bake", 
             "3. Maskless Exposure", 
-            "4. Post-Exposure Bake (PEB)",
-            "5. Development"
+            "4. Development", 
+            "5. Post-Bake (Hardbake)"
         ]
     )
 
@@ -254,6 +254,125 @@ with tab_simulation:
             ax.set_ylabel("Thickness / Intensity")
             ax.set_xticks([])
             ax.legend(loc="upper right", fontsize='small')
+            ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+            st.pyplot(fig)
+            # --- Step 4 Logic: Development ---
+    elif step == "4. Development":
+        st.header("Step 4: Photoresist Development")
+        
+        if 'received_dose' not in st.session_state or np.max(st.session_state.received_dose) == 0:
+             st.warning("⚠️ Please execute Step 3 (Maskless Exposure) first!")
+        else:
+            st.markdown("Simulating the chemical development process. Since AZ 1505 is a positive resist, the exposed areas will dissolve.")
+            
+            st.sidebar.markdown("---")
+            st.sidebar.subheader("Development Parameters")
+            
+            # The manual suggests ~2 minutes (120s) for development
+            dev_time = st.sidebar.slider("Development Time (seconds)", min_value=30, max_value=240, value=120, step=10)
+            
+            if dev_time < 90:
+                st.info("ℹ️ **Under-developed:** Some reacted photoresist remains in the trenches.")
+                clearance = dev_time / 120.0
+            elif 90 <= dev_time <= 150:
+                st.success("✅ **Optimal Development:** Exposed resist is fully dissolved.")
+                clearance = 1.0
+            else:
+                st.warning("⚠️ **Over-developed:** Unexposed resist is starting to erode (dark erosion), degrading feature edges.")
+                clearance = 1.0 + ((dev_time - 150) / 200.0)
+
+            col1, col2 = st.columns(2)
+            col1.metric("Developer Time", f"{dev_time} sec")
+            col2.metric("Rinse Method", "DI Water")
+
+            st.markdown("---")
+            fig, ax = plt.subplots(figsize=(10, 4))
+            x = np.linspace(0, 10, 500)
+            
+            baked_thickness = st.session_state.current_thickness * 0.90 
+            
+            ax.fill_between(x, 0, -2, color='#A9A9A9', label='Silicon Substrate')
+            
+            # Calculate final resist profile based on exposure dose
+            exposure_threshold = 20.0 # Minimum mJ/cm2 to trigger solubility
+            final_profile = np.ones_like(x) * baked_thickness
+            
+            if clearance <= 1.0:
+                # Under/Optimal development
+                dissolved_amount = np.where(st.session_state.received_dose > exposure_threshold, baked_thickness * clearance, 0)
+                final_profile -= dissolved_amount
+            else:
+                # Over-development (dark erosion shrinks the whole film slightly)
+                dissolved_amount = np.where(st.session_state.received_dose > exposure_threshold, baked_thickness, 0)
+                final_profile -= dissolved_amount
+                final_profile -= (baked_thickness * (clearance - 1.0))
+                
+            # Prevent negative thickness mathematically
+            final_profile = np.clip(final_profile, 0, baked_thickness)
+            st.session_state.developed_profile = final_profile # Save for the hardbake
+            
+            ax.fill_between(x, 0, final_profile, color='#FF0000', alpha=0.8, label='Patterned AZ 1505')
+            
+            ax.set_ylim(-2.5, 4.0) 
+            ax.set_xlim(0, 10)
+            ax.set_ylabel("Thickness (µm)")
+            ax.set_xticks([])
+            ax.legend(loc="upper right")
+            ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+            st.pyplot(fig)
+
+    # --- Step 5 Logic: Post-Bake (Hardbake) ---
+    elif step == "5. Post-Bake (Hardbake)":
+        st.header("Step 5: Post-Bake (Hardbake)")
+        
+        if 'developed_profile' not in st.session_state:
+            st.warning("⚠️ Please execute Step 4 (Development) first!")
+        else:
+            st.markdown("Hardening the photoresist for the next process (e.g., etching or ion implantation).")
+            
+            st.sidebar.markdown("---")
+            st.sidebar.subheader("Hardbake Parameters")
+            
+            # The manual states hardbake temp should be higher than softbake.
+            # AZ 1500 datasheet recommends 100C to 110C to avoid thermal distortion.
+            hb_temp = st.sidebar.slider("Temperature (°C)", min_value=90, max_value=140, value=110, step=5)
+            hb_time = st.sidebar.slider("Time (minutes)", min_value=1, max_value=10, value=5, step=1)
+            
+            if hb_temp < 100:
+                st.info("ℹ️ **Low Temperature:** May not fully harden the resist for harsh wet etch processes.")
+            elif 100 <= hb_temp <= 115:
+                st.success("✅ **Optimal Hardbake:** Resist is hardened with minimal thermal distortion of the pattern.")
+            else:
+                st.error("🚨 **Thermal Distortion (Reflow):** Temperature is too high. The photoresist is melting and ruining the critical dimensions of your pattern!")
+
+            col1, col2 = st.columns(2)
+            col1.metric("Hardbake Temp", f"{hb_temp} °C")
+            col2.metric("Hardbake Time", f"{hb_time} min")
+
+            st.markdown("---")
+            fig, ax = plt.subplots(figsize=(10, 4))
+            x = np.linspace(0, 10, 500)
+            
+            ax.fill_between(x, 0, -2, color='#A9A9A9', label='Silicon Substrate')
+            
+            profile = st.session_state.developed_profile.copy()
+            
+            # Simulate thermal reflow (melting) if baked too hot
+            if hb_temp > 115:
+                reflow_amount = (hb_temp - 115) * 2
+                window = np.ones(reflow_amount) / reflow_amount
+                profile = np.convolve(profile, window, mode='same')
+                color = '#8B0000' # Darker red/brown to show baking
+            else:
+                color = '#B22222' # Slightly darker than development to show hardening
+                
+            ax.fill_between(x, 0, profile, color=color, alpha=0.9, label='Hardened AZ 1505 Pattern')
+            
+            ax.set_ylim(-2.5, 4.0) 
+            ax.set_xlim(0, 10)
+            ax.set_ylabel("Thickness (µm)")
+            ax.set_xticks([])
+            ax.legend(loc="upper right")
             ax.grid(True, axis='y', linestyle='--', alpha=0.5)
             st.pyplot(fig)
 
