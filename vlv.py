@@ -1,3 +1,10 @@
+Moving the controls out of the sidebar and into the main simulation tab is a brilliant UI choice. It makes the application feel much more like a unified piece of "virtual lab equipment," and ensures the controls are only visible when the student actually needs them. 
+
+To do this, we will remove all `st.sidebar` commands and replace them with standard `st` commands. To keep the interface clean and prevent the sliders from taking up the whole screen, we can use `st.columns()` to arrange the parameters side-by-side inside the Simulation tab.
+
+Here is the updated code for `vlv.py`. 
+
+```python
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
@@ -79,30 +86,39 @@ with tab_procedure:
 
 # --- TAB 4: SIMULATION ---
 with tab_simulation:
-    st.sidebar.title("Lab Controls")
-    resist_type = st.sidebar.selectbox("Select Photoresist:", list(RESIST_CONSTANTS.keys()))
-    st.session_state.selected_resist = resist_type
+    st.header("⚙️ Simulation Workspace")
     
-    st.sidebar.markdown("---")
+    # Global Lab Controls laid out horizontally
+    col_mat, col_step = st.columns([1, 3])
+    with col_mat:
+        resist_type = st.selectbox("Select Photoresist:", list(RESIST_CONSTANTS.keys()))
+        st.session_state.selected_resist = resist_type
+        
+    with col_step:
+        step = st.radio(
+            "Select Process Step:",
+            [
+                "1. Spin Coating", 
+                "2. Soft Bake", 
+                "3. Maskless Exposure", 
+                "4. Development", 
+                "5. Post-Bake (Hardbake)"
+            ],
+            horizontal=True
+        )
     
-    # EXACT STRING MATCHES for the steps
-    step = st.sidebar.radio(
-        "Select Process Step:",
-        [
-            "1. Spin Coating", 
-            "2. Soft Bake", 
-            "3. Maskless Exposure", 
-            "4. Development", 
-            "5. Post-Bake (Hardbake)"
-        ]
-    )
+    st.divider()
 
     # --- Step 1 Logic ---
     if step == "1. Spin Coating":
-        st.header("Step 1: Photoresist Spin Coating")
+        st.subheader("Step 1: Photoresist Spin Coating")
         
-        rpm = st.sidebar.slider("Spin Speed (RPM)", min_value=500, max_value=5000, value=3000, step=100)
+        # UI for Parameters
+        col_params, col_metrics = st.columns([1, 1])
+        with col_params:
+            rpm = st.slider("Spin Speed (RPM)", min_value=500, max_value=5000, value=3000, step=100)
         
+        # Math
         k_val = RESIST_CONSTANTS[st.session_state.selected_resist]
         thickness_um = k_val / np.sqrt(rpm)
         st.session_state.current_thickness = thickness_um 
@@ -112,9 +128,10 @@ with tab_simulation:
         if 'received_dose' in st.session_state: del st.session_state['received_dose']
         if 'developed_profile' in st.session_state: del st.session_state['developed_profile']
         
-        col1, col2 = st.columns(2)
-        col1.metric("Spin Speed", f"{rpm} RPM")
-        col2.metric("Calculated Film Thickness", f"{thickness_um:.3f} µm")
+        with col_metrics:
+            m1, m2 = st.columns(2)
+            m1.metric("Spin Speed", f"{rpm} RPM")
+            m2.metric("Calculated Film Thickness", f"{thickness_um:.3f} µm")
             
         st.markdown("---")
         fig, ax = plt.subplots(figsize=(10, 4))
@@ -133,13 +150,16 @@ with tab_simulation:
 
     # --- Step 2 Logic ---
     elif step == "2. Soft Bake":
-        st.header("Step 2: Soft Bake")
+        st.subheader("Step 2: Soft Bake")
         
         if st.session_state.current_thickness == 0.0:
             st.warning("⚠️ Please execute Step 1 (Spin Coating) first!")
         else:
-            temp = st.sidebar.slider("Temperature (°C)", min_value=70, max_value=150, value=100, step=5)
-            time_sec = st.sidebar.slider("Time (seconds)", min_value=30, max_value=120, value=90, step=10)
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                temp = st.slider("Temperature (°C)", min_value=70, max_value=150, value=100, step=5)
+            with col_p2:
+                time_sec = st.slider("Time (seconds)", min_value=30, max_value=120, value=90, step=10)
             
             pr_color = '#FF4500' 
             shrinkage_factor = 1.0
@@ -188,19 +208,20 @@ with tab_simulation:
 
     # --- Step 3 Logic ---
     elif step == "3. Maskless Exposure":
-        st.header("Step 3: Direct Write Exposure (uMLA)")
+        st.subheader("Step 3: Direct Write Exposure (uMLA)")
         
         if st.session_state.resist_status in ["Degraded", "Charred", "Unbaked"]:
             st.error(f"Cannot expose wafer. The photoresist is currently {st.session_state.resist_status.lower()}.")
         else:
             st.markdown("Simulating the **uMLA maskless aligner** using a 365 nm UV light source.")
-            st.sidebar.markdown("---")
-            st.sidebar.subheader("uMLA Parameters")
             
-            scan_mode = st.sidebar.radio("Scan Mode", ["Vector Scan", "Raster Scan"])
-            pattern_type = st.sidebar.selectbox("Digital Write Pattern", ["Single Trench", "Double Trench", "Dense Grating"])
-            dose = st.sidebar.slider("Exposure Dose (mJ/cm²)", min_value=20, max_value=200, value=90, step=10)
-            defocus = st.sidebar.slider("Defocus (µm)", min_value=-20, max_value=20, value=0, step=5)
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                scan_mode = st.radio("Scan Mode", ["Vector Scan", "Raster Scan"], horizontal=True)
+                pattern_type = st.selectbox("Digital Write Pattern", ["Single Trench", "Double Trench", "Dense Grating"])
+            with col_p2:
+                dose = st.slider("Exposure Dose (mJ/cm²)", min_value=20, max_value=200, value=90, step=10)
+                defocus = st.slider("Defocus (µm)", min_value=-20, max_value=20, value=0, step=5)
             
             if defocus == 0:
                 st.success("✅ **Optimal focus:** Produces sharp, high-resolution features.")
@@ -234,10 +255,10 @@ with tab_simulation:
 
             st.session_state.received_dose = exposure_profile * dose
             
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Operating Mode", scan_mode)
-            col2.metric("Laser Dose", f"{dose} mJ/cm²")
-            col3.metric("Defocus Offset", f"{defocus} µm")
+            col_m1, col_m2, col_m3 = st.columns(3)
+            col_m1.metric("Operating Mode", scan_mode)
+            col_m2.metric("Laser Dose", f"{dose} mJ/cm²")
+            col_m3.metric("Defocus Offset", f"{defocus} µm")
 
             st.markdown("---")
             fig, ax = plt.subplots(figsize=(10, 4))
@@ -261,16 +282,16 @@ with tab_simulation:
 
     # --- Step 4 Logic ---
     elif step == "4. Development":
-        st.header("Step 4: Photoresist Development")
+        st.subheader("Step 4: Photoresist Development")
         
         if 'received_dose' not in st.session_state or np.max(st.session_state.received_dose) == 0:
              st.warning("⚠️ Please execute Step 3 (Maskless Exposure) first!")
         else:
             st.markdown("Simulating chemical development. Since AZ 1505 is a positive resist, exposed areas dissolve.")
-            st.sidebar.markdown("---")
-            st.sidebar.subheader("Development Parameters")
             
-            dev_time = st.sidebar.slider("Development Time (seconds)", min_value=30, max_value=240, value=120, step=10)
+            col_p1, col_p2 = st.columns([1, 1])
+            with col_p1:
+                dev_time = st.slider("Development Time (seconds)", min_value=30, max_value=240, value=120, step=10)
             
             if dev_time < 90:
                 st.info("ℹ️ **Under-developed:** Some reacted photoresist remains in the trenches.")
@@ -282,9 +303,9 @@ with tab_simulation:
                 st.warning("⚠️ **Over-developed:** Unexposed resist is starting to erode (dark erosion).")
                 clearance = 1.0 + ((dev_time - 150) / 200.0)
 
-            col1, col2 = st.columns(2)
-            col1.metric("Developer Time", f"{dev_time} sec")
-            col2.metric("Rinse Method", "DI Water")
+            with col_p2:
+                st.metric("Developer Time", f"{dev_time} sec")
+                st.metric("Rinse Method", "DI Water")
 
             st.markdown("---")
             fig, ax = plt.subplots(figsize=(10, 4))
@@ -319,17 +340,18 @@ with tab_simulation:
 
     # --- Step 5 Logic ---
     elif step == "5. Post-Bake (Hardbake)":
-        st.header("Step 5: Post-Bake (Hardbake)")
+        st.subheader("Step 5: Post-Bake (Hardbake)")
         
         if 'developed_profile' not in st.session_state:
             st.warning("⚠️ Please execute Step 4 (Development) first!")
         else:
             st.markdown("Hardening the photoresist for the next process (e.g., etching or ion implantation).")
-            st.sidebar.markdown("---")
-            st.sidebar.subheader("Hardbake Parameters")
             
-            hb_temp = st.sidebar.slider("Temperature (°C)", min_value=90, max_value=150, value=110, step=5)
-            hb_time = st.sidebar.slider("Time (minutes)", min_value=1, max_value=10, value=5, step=1)
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                hb_temp = st.slider("Temperature (°C)", min_value=90, max_value=150, value=110, step=5)
+            with col_p2:
+                hb_time = st.slider("Time (minutes)", min_value=1, max_value=10, value=5, step=1)
             
             if hb_temp < 100:
                 st.info("ℹ️ **Low Temperature:** May not fully harden the resist.")
@@ -338,9 +360,9 @@ with tab_simulation:
             else:
                 st.error("🚨 **Thermal Distortion (Reflow):** Temperature is too high. The photoresist is melting!")
 
-            col1, col2 = st.columns(2)
-            col1.metric("Hardbake Temp", f"{hb_temp} °C")
-            col2.metric("Hardbake Time", f"{hb_time} min")
+            col_m1, col_m2 = st.columns(2)
+            col_m1.metric("Hardbake Temp", f"{hb_temp} °C")
+            col_m2.metric("Hardbake Time", f"{hb_time} min")
 
             st.markdown("---")
             fig, ax = plt.subplots(figsize=(10, 4))
