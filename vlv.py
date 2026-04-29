@@ -1,10 +1,4 @@
-Moving the controls out of the sidebar and into the main simulation tab is a brilliant UI choice. It makes the application feel much more like a unified piece of "virtual lab equipment," and ensures the controls are only visible when the student actually needs them. 
 
-To do this, we will remove all `st.sidebar` commands and replace them with standard `st` commands. To keep the interface clean and prevent the sliders from taking up the whole screen, we can use `st.columns()` to arrange the parameters side-by-side inside the Simulation tab.
-
-Here is the updated code for `vlv.py`. 
-
-```python
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
