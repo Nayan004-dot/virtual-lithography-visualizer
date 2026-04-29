@@ -149,11 +149,8 @@ with tab_simulation:
         if st.session_state.current_thickness == 0.0:
             st.warning("⚠️ Please execute Step 1 (Spin Coating) first!")
         else:
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                temp = st.slider("Temperature (°C)", min_value=70, max_value=150, value=100, step=5)
-            with col_p2:
-                time_sec = st.slider("Time (seconds)", min_value=30, max_value=120, value=90, step=10)
+            # Removed time_sec, kept only temperature
+            temp = st.slider("Temperature (°C)", min_value=70, max_value=150, value=100, step=5)
             
             pr_color = '#FF4500' 
             shrinkage_factor = 1.0
@@ -211,7 +208,7 @@ with tab_simulation:
             
             col_p1, col_p2 = st.columns(2)
             with col_p1:
-                scan_mode = st.radio("Scan Mode", ["Vector Scan", "Raster Scan"], horizontal=True)
+                # Removed Scan Mode
                 pattern_type = st.selectbox("Digital Write Pattern", ["Single Trench", "Double Trench", "Dense Grating"])
             with col_p2:
                 dose = st.slider("Exposure Dose (mJ/cm²)", min_value=20, max_value=200, value=90, step=10)
@@ -249,10 +246,10 @@ with tab_simulation:
 
             st.session_state.received_dose = exposure_profile * dose
             
-            col_m1, col_m2, col_m3 = st.columns(3)
-            col_m1.metric("Operating Mode", scan_mode)
-            col_m2.metric("Laser Dose", f"{dose} mJ/cm²")
-            col_m3.metric("Defocus Offset", f"{defocus} µm")
+            # Adjusted metrics to just show Dose and Defocus
+            col_m1, col_m2 = st.columns(2)
+            col_m1.metric("Laser Dose", f"{dose} mJ/cm²")
+            col_m2.metric("Defocus Offset", f"{defocus} µm")
 
             st.markdown("---")
             fig, ax = plt.subplots(figsize=(10, 4))
@@ -332,7 +329,7 @@ with tab_simulation:
             ax.grid(True, axis='y', linestyle='--', alpha=0.5)
             st.pyplot(fig)
 
-    # --- Step 5 Logic ---
+   # --- Step 5 Logic ---
     elif step == "5. Post-Bake (Hardbake)":
         st.subheader("Step 5: Post-Bake (Hardbake)")
         
@@ -341,11 +338,8 @@ with tab_simulation:
         else:
             st.markdown("Hardening the photoresist for the next process (e.g., etching or ion implantation).")
             
-            col_p1, col_p2 = st.columns(2)
-            with col_p1:
-                hb_temp = st.slider("Temperature (°C)", min_value=90, max_value=150, value=110, step=5)
-            with col_p2:
-                hb_time = st.slider("Time (minutes)", min_value=1, max_value=10, value=5, step=1)
+            # Removed time slider
+            hb_temp = st.slider("Temperature (°C)", min_value=90, max_value=150, value=110, step=5)
             
             if hb_temp < 100:
                 st.info("ℹ️ **Low Temperature:** May not fully harden the resist.")
@@ -354,9 +348,8 @@ with tab_simulation:
             else:
                 st.error("🚨 **Thermal Distortion (Reflow):** Temperature is too high. The photoresist is melting!")
 
-            col_m1, col_m2 = st.columns(2)
-            col_m1.metric("Hardbake Temp", f"{hb_temp} °C")
-            col_m2.metric("Hardbake Time", f"{hb_time} min")
+            # Simplified metric
+            st.metric("Hardbake Temp", f"{hb_temp} °C")
 
             st.markdown("---")
             fig, ax = plt.subplots(figsize=(10, 4))
@@ -383,7 +376,6 @@ with tab_simulation:
             ax.legend(loc="upper right")
             ax.grid(True, axis='y', linestyle='--', alpha=0.5)
             st.pyplot(fig)
-
 # --- TAB 5: QUIZ ---
 # --- TAB 5: QUIZ ---
 with tab_quiz:
