@@ -385,9 +385,78 @@ with tab_simulation:
             st.pyplot(fig)
 
 # --- TAB 5: QUIZ ---
+# --- TAB 5: QUIZ ---
 with tab_quiz:
-    st.header("Test Your Knowledge")
-    st.markdown("1. Why does the final resist thickness decrease as spin speed increases?")
-    st.markdown("2. In maskless lithography, what is the physical consequence of applying a positive defocus to the laser beam?")
-    st.markdown("3. If you leave a wafer coated with positive photoresist in the developer for 4 minutes instead of 2 minutes, what defect will occur?")
-    st.markdown("4. Why is the hardbake temperature generally higher than the softbake temperature?")
+    st.header("🧠 Test Your Knowledge")
+    st.markdown("Test your understanding of the photolithography process based on the virtual lab simulation.")
+    
+    # Using st.form prevents the app from rerunning every time a radio button is clicked
+    with st.form("quiz_form"):
+        q1 = st.radio(
+            "1. What is the relationship between spin speed (RPM) and photoresist thickness?",
+            ["t ∝ RPM", "t ∝ 1/RPM", "t ∝ 1/√RPM", "t ∝ √RPM"],
+            key="q1"
+        )
+        
+        q2 = st.radio(
+            "2. What is the primary purpose of the Soft Bake step prior to exposure?",
+            ["To harden the resist for wet etching", "To evaporate residual solvent and densify the film", "To create a hydrophobic surface on the silicon", "To dissolve the unexposed photoresist"],
+            key="q2"
+        )
+        
+        q3 = st.radio(
+            "3. In maskless lithography, what is the physical consequence of applying a positive defocus to the laser beam?",
+            ["Produces perfectly vertical sidewalls", "Increases the spot size and blurs the edges", "Decreases the exposure dose", "Dissolves the photoresist immediately"],
+            key="q3"
+        )
+        
+        q4 = st.radio(
+            "4. When using a positive photoresist like AZ 1505, what happens to the regions exposed to the UV laser?",
+            ["They cross-link and become insoluble", "They melt and reflow into the trenches", "They undergo a chemical reaction making them soluble in the developer", "They bond permanently to the silicon substrate"],
+            key="q4"
+        )
+        
+        q5 = st.radio(
+            "5. According to the AZ 1500 series datasheet, which of the following is a recommended developer?",
+            ["Acetone", "Deionized (DI) Water", "AZ 300MIF", "Isopropyl Alcohol (IPA)"],
+            key="q5"
+        )
+        
+        q6 = st.radio(
+            "6. What happens if the Hardbake temperature significantly exceeds the optimal range (e.g., > 115°C)?",
+            ["The resist becomes more photosensitive", "Thermal reflow occurs, ruining the pattern dimensions", "The developer works much faster", "The silicon substrate melts"],
+            key="q6"
+        )
+
+        # The submit button for the form
+        submitted = st.form_submit_button("Submit Quiz")
+
+    # This logic only runs after the user clicks submit
+    if submitted:
+        score = 0
+        
+        # Grading logic
+        if q1 == "t ∝ 1/√RPM": 
+            score += 1
+        if q2 == "To evaporate residual solvent and densify the film": 
+            score += 1
+        if q3 == "Increases the spot size and blurs the edges": 
+            score += 1
+        if q4 == "They undergo a chemical reaction making them soluble in the developer": 
+            score += 1
+        if q5 == "AZ 300MIF": 
+            score += 1
+        if q6 == "Thermal reflow occurs, ruining the pattern dimensions":
+            score += 1
+
+        st.markdown("---")
+        st.subheader(f"Your Score: {score}/6")
+
+        # Feedback based on score
+        if score == 6:
+            st.balloons()
+            st.success("🏆 Excellent! You have a strong understanding of photolithography.")
+        elif score >= 4:
+            st.info("👍 Good job! Review a few concepts in the Theory tab to improve further.")
+        else:
+            st.warning("📚 Revise the theory and simulation steps, then try again.")
