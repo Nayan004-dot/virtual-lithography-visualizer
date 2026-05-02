@@ -18,12 +18,12 @@ if 'resist_status' not in st.session_state:
     st.session_state.resist_status = "Unbaked"
 
 # --- MAIN VIRTUAL LAB LAYOUT ---
-st.title("🔬 Virtual Lab: Maskless Photolithography Process")
+st.title(" Virtual Lab: Maskless Photolithography Process")
 st.markdown("Explore the deposition, exposure, and development of positive photoresists on a silicon substrate using a Direct Laser Writer.")
 
 # Create the standard Virtual Lab Tabs
 tab_aim, tab_theory, tab_procedure, tab_simulation, tab_quiz = st.tabs([
-    "🎯 Aim", "📚 Theory", "📝 Procedure", "⚙️ Simulation", "🧠 Quiz"
+    " Aim", " Theory", " Procedure", " Simulation", " Quiz"
 ])
 
 # --- TAB 1: AIM ---
@@ -80,7 +80,7 @@ with tab_procedure:
 
 # --- TAB 4: SIMULATION ---
 with tab_simulation:
-    st.header("⚙️ Simulation Workspace")
+    st.header(" Simulation Workspace")
     
     # Global Lab Controls laid out horizontally
     col_mat, col_step = st.columns([1, 3])
@@ -147,7 +147,7 @@ with tab_simulation:
         st.subheader("Step 2: Soft Bake")
         
         if st.session_state.current_thickness == 0.0:
-            st.warning("⚠️ Please execute Step 1 (Spin Coating) first!")
+            st.warning(" Please execute Step 1 (Spin Coating) first!")
         else:
             # Removed time_sec, kept only temperature
             temp = st.slider("Temperature (°C)", min_value=70, max_value=150, value=100, step=5)
@@ -215,11 +215,11 @@ with tab_simulation:
                 defocus = st.slider("Defocus (µm)", min_value=-20, max_value=20, value=0, step=5)
             
             if defocus == 0:
-                st.success("✅ **Optimal focus:** Produces sharp, high-resolution features.")
+                st.success(" **Optimal focus:** Produces sharp, high-resolution features.")
             elif defocus > 0:
-                st.info("ℹ️ **Positive defocus:** Beam focused above resist. Increases spot size, useful for larger features.")
+                st.info(" **Positive defocus:** Beam focused above resist. Increases spot size, useful for larger features.")
             else:
-                st.info("ℹ️ **Negative defocus:** Beam focused below resist. Can improve sidewall angles.")
+                st.info(" **Negative defocus:** Beam focused below resist. Can improve sidewall angles.")
 
             x = np.linspace(0, 10, 500) 
             base_profile = np.zeros_like(x)
@@ -276,7 +276,7 @@ with tab_simulation:
         st.subheader("Step 4: Photoresist Development")
         
         if 'received_dose' not in st.session_state or np.max(st.session_state.received_dose) == 0:
-             st.warning("⚠️ Please execute Step 3 (Maskless Exposure) first!")
+             st.warning(" Please execute Step 3 (Maskless Exposure) first!")
         else:
             st.markdown("Simulating chemical development. Since AZ 1505 is a positive resist, exposed areas dissolve.")
             
@@ -285,13 +285,13 @@ with tab_simulation:
                 dev_time = st.slider("Development Time (seconds)", min_value=30, max_value=240, value=120, step=10)
             
             if dev_time < 90:
-                st.info("ℹ️ **Under-developed:** Some reacted photoresist remains in the trenches.")
+                st.info(" **Under-developed:** Some reacted photoresist remains in the trenches.")
                 clearance = dev_time / 120.0
             elif 90 <= dev_time <= 150:
-                st.success("✅ **Optimal Development:** Exposed resist is fully dissolved.")
+                st.success(" **Optimal Development:** Exposed resist is fully dissolved.")
                 clearance = 1.0
             else:
-                st.warning("⚠️ **Over-developed:** Unexposed resist is starting to erode (dark erosion).")
+                st.warning(" **Over-developed:** Unexposed resist is starting to erode (dark erosion).")
                 clearance = 1.0 + ((dev_time - 150) / 200.0)
 
             with col_p2:
@@ -334,7 +334,7 @@ with tab_simulation:
         st.subheader("Step 5: Post-Bake (Hardbake)")
         
         if 'developed_profile' not in st.session_state:
-            st.warning("⚠️ Please execute Step 4 (Development) first!")
+            st.warning(" Please execute Step 4 (Development) first!")
         else:
             st.markdown("Hardening the photoresist for the next process (e.g., etching or ion implantation).")
             
@@ -342,11 +342,11 @@ with tab_simulation:
             hb_temp = st.slider("Temperature (°C)", min_value=90, max_value=150, value=110, step=5)
             
             if hb_temp < 100:
-                st.info("ℹ️ **Low Temperature:** May not fully harden the resist.")
+                st.info(" **Low Temperature:** May not fully harden the resist.")
             elif 100 <= hb_temp <= 115:
-                st.success("✅ **Optimal Hardbake:** Resist is hardened with minimal thermal distortion.")
+                st.success(" **Optimal Hardbake:** Resist is hardened with minimal thermal distortion.")
             else:
-                st.error("🚨 **Thermal Distortion (Reflow):** Temperature is too high. The photoresist is melting!")
+                st.error(" **Thermal Distortion (Reflow):** Temperature is too high. The photoresist is melting!")
 
             # Simplified metric
             st.metric("Hardbake Temp", f"{hb_temp} °C")
@@ -379,7 +379,7 @@ with tab_simulation:
 # --- TAB 5: QUIZ ---
 # --- TAB 5: QUIZ ---
 with tab_quiz:
-    st.header("🧠 Test Your Knowledge")
+    st.header(" Test Your Knowledge")
     st.markdown("Test your understanding of the photolithography process based on the virtual lab simulation.")
     
     # Using st.form prevents the app from rerunning every time a radio button is clicked
@@ -447,8 +447,8 @@ with tab_quiz:
         # Feedback based on score
         if score == 6:
             st.balloons()
-            st.success("🏆 Excellent! You have a strong understanding of photolithography.")
+            st.success(" Excellent! You have a strong understanding of photolithography.")
         elif score >= 4:
-            st.info("👍 Good job! Review a few concepts in the Theory tab to improve further.")
+            st.info(" Good job! Review a few concepts in the Theory tab to improve further.")
         else:
-            st.warning("📚 Revise the theory and simulation steps, then try again.")
+            st.warning(" Revise the theory and simulation steps, then try again.")
